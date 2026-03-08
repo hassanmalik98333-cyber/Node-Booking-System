@@ -1,9 +1,9 @@
-function error(message, code) {
-  return { status: 'error', message, code };
+function error(code, message) {
+  return { success: false, error: { code, message } };
 }
 
 function success(data) {
-  return { status: 'success', data };
+  return { success: true, data };
 }
 
 export { error, success };

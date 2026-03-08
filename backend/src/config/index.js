@@ -15,8 +15,6 @@ if (logLevel !== 'debug' && logLevel !== 'info' && logLevel !== 'warn' && logLev
   throw new Error(`LOG_LEVEL:${logLevel}, is not valid`);
 }
 
-
-
 const config = {
   port,
   env,

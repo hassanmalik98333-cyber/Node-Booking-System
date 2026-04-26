@@ -1,14 +1,15 @@
-const errCodes = {
+const ERROR_CODES = {
   NOT_FOUND: 'NOT_FOUND',
   INVALID_JSON: 'INVALID_JSON',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
   UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
 };
+// enum-like style for error codes
 
-Object.freeze(errCodes);
+Object.freeze(ERROR_CODES);
 
-export default errCodes;
+export default ERROR_CODES;
 
 // used to avoid hard coding the error codes.
 // this way I can avoid inconsistent error codes, and accidental miss spelling

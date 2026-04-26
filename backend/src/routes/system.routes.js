@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { success, error } from '../utils/response.js';
 import BadRequestError from '../errors/badRequest.js';
-import errCodes from '../errors/errorCodes.js';
+import ERROR_CODES from '../errors/errorCodes.js';
 
 const router = Router();
 

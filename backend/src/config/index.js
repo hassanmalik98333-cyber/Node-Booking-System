@@ -1,26 +1,50 @@
-const port = Number(process.env.PORT);
-const env = process.env.NODE_ENV || 'development';
-const logLevel = process.env.LOG_LEVEL || 'info';
+import 'dotenv/config';
+import Joi from 'joi';
 
-// TCP ports must be integers between 0–65535
-if (!Number.isInteger(port) || port < 0 || port > 65535) {
-  throw new Error('PORT must be a number between 0 and 65535');
-}
+const envSchema = Joi.object({
+  NODE_ENV: Joi.string()
+    .trim()
+    .valid('development', 'test', 'production')
+    .default('development'),
 
-if (env !== 'development' && env !== 'test' && env !== 'production') {
-  throw new Error(`NODE_ENV:${env}, is not valid`);
-}
+  LOG_LEVEL: Joi.string()
+    .trim()
+    .valid('debug', 'info', 'warn', 'error')
+    .default('info'),
 
-if (logLevel !== 'debug' && logLevel !== 'info' && logLevel !== 'warn' && logLevel !== 'error') {
-  throw new Error(`LOG_LEVEL:${logLevel}, is not valid`);
+  PORT: Joi.number().integer().min(1).max(65535).required(), // 0 is not an appropriate port number
+
+  DATABASE_URL: Joi.string()
+    .trim()
+    .uri({ scheme: ['postgres', 'postgresql'] }) // scheme is the first part of a url before the ://
+    .required(),
+});
+
+const rawConfig = {
+  NODE_ENV: process.env.NODE_ENV,
+  LOG_LEVEL: process.env.LOG_LEVEL,
+  PORT: process.env.PORT,
+  DATABASE_URL: process.env.DATABASE_URL,
+};
+
+const { value, error } = envSchema.validate(rawConfig, {
+  abortEarly: false,
+  convert: true, // default is true, wrote it just to make it explicit
+});
+
+if (error) {
+  const messages = error.details.map((detail) => detail.message).join('; ');
+
+  throw new Error(`Config validation failed: ${messages}`);
 }
 
 const config = {
-  port,
-  env,
-  logLevel,
+  port: value.PORT,
+  logLevel: value.LOG_LEVEL,
+  env: value.NODE_ENV,
+  databaseUrl: value.DATABASE_URL,
 };
 
-Object.freeze(config); // to make the config object immutable
+Object.freeze(config);
 
 export default config;

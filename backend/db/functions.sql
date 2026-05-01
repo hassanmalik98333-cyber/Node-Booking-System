@@ -106,7 +106,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   IF  (SELECT deleted_at FROM users WHERE id = NEW.user_id) IS NOT NULL
-    THEN RAISE EXCEPTION 'You cannot reserve a soft deleted user';
+    THEN RAISE EXCEPTION 'A soft deleted user cannot reserve';
   END IF;
 
 RETURN NEW;

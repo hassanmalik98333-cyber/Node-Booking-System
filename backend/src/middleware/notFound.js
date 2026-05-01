@@ -1,8 +1,9 @@
-import ERROR_CODES from '../errors/errorCodes.js';
-import { error } from '../utils/response.js';
+import AppError from '../errors/AppError.js';
 
 function notFound(req, res) {
-  return res.status(404).json(error(ERROR_CODES.NOT_FOUND, 'Not Found'));
+  throw AppError.notFound('Not Found');
 }
 
 export default notFound;
+
+// the point of this file is to be a general not found

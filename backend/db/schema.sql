@@ -4,13 +4,21 @@ CREATE TABLE users (
   name TEXT,
   email TEXT NOT NULL, 
   -- enforce valid email in the backend (tricky as there are unusual valid emails like user@[192.168.1.10])
-  role TEXT NOT NULL DEFAULT 'user',
+  role TEXT NOT NULL DEFAULT 'user', 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ, -- make it so that a soft deleted user cannot be un-deleted (backend logic in step 5)
   -- TIMESTAMPTZ NOT NULL DEFAULT NOW() does not automatically make it UTC, you have to make it TC by stting it in the current session, the database, and the role/user.
   -- PostgreSQL stores it internally in a UTC-based form, The part that changes is mostly display/output, which follows the session timezone. 
   CONSTRAINT user_role_check CHECK (role IN ('user', 'admin')), -- use ENUM
+  -- add employee role in step 8 (they can only complete a reservation)
+  -- admin can fill the manager role
+  -- these 3 are simple but enough for a junior project
+  -- employee/admin can mark reservations completed
+  -- this is a simple model cause one employee in this system has access to all resources/reservations
+  -- in a better system it would be per location
+  -- can also add a location table in a more advanced version of this booking system after completion in a seperate repo
+
 
   CONSTRAINT users_valid_username
     CHECK (length(trim(username)) > 0), 
@@ -199,7 +207,7 @@ CREATE TABLE availability_window_allowed_durations (
     CHECK (duration_minutes > 0),
 
   CONSTRAINT awad_30_min_interval_check
-    CHECK (duration_minutes % 30 = 0),
+    CHECK (duration_minutes % 30 = 0), -- enforce with joi as well
 
   CONSTRAINT unique_window_duration_per_window
     UNIQUE(availability_window_id, duration_minutes)
@@ -258,6 +266,9 @@ CREATE TABLE reservations (
     -- Graphile Worker (learn this)
     -- with this you still need to query status = 'active' AND end_time > NOW()
     -- fast implementation first(setInterval), then after my backend is more developed and tested, Graphile Worker
+    
+    -- for creation client should not have access to status, it defaults to active (but it is returned)
+    -- on update, they can cancell or complete
 
   CONSTRAINT valid_status_cancelled_at_check
     CHECK (
@@ -304,13 +315,18 @@ CREATE INDEX idx_resources_deleted_at ON resources(deleted_at);
 
 CREATE INDEX idx_availability_resource_start 
   ON availability_windows(resource_id, start_time);
-  -- even though this creates an index on the combonation, it may still be used for resource_id as it is the first column.
+CREATE INDEX idx_availability_windows_non_deleted_end_time
+ON availability_windows(end_time)
+WHERE deleted_at IS NULL; -- because I filter out expired windows
 
 CREATE INDEX idx_reservations_user_created 
   ON reservations(user_id, created_at);
 CREATE INDEX idx_reservations_resource_start 
   ON reservations(resource_id, start_time);
 CREATE INDEX idx_reservations_status ON reservations(status);
+CREATE INDEX idx_reservations_active_end_time
+ON reservations(end_time)
+WHERE status = 'active'; -- because I filter out expired reservations
 
 
 

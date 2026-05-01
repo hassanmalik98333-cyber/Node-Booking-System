@@ -1,19 +1,31 @@
+import AppError from '../errors/AppError.js';
 import ERROR_CODES from '../errors/errorCodes.js';
 import { error } from '../utils/response.js';
 
+// Express recognizes error-handling middleware by the 4 parameters, so 4 is a must not 3
 export default function errorHandler(err, req, res, next) {
-  
   if (err.type === 'entity.parse.failed') {
-    return res.status(err.status).json(error(ERROR_CODES.INVALID_JSON, 'Invalid Json'));
+    return res
+      .status(err.status)
+      .json(error(ERROR_CODES.INVALID_JSON, 'Invalid JSON'));
   }
 
-  if (err.code === 'BAD_REQUEST') {
-    return res.status(err.status).json(error(ERROR_CODES.BAD_REQUEST, 'Bad Request'));
-  } // for client errors, triggered by throwing new BadRequestError(message)
+  if (err instanceof AppError) {
+    if (err.cause !== undefined) {
+      console.error(err.cause);
+    }
 
-  return res.status(500).json(error(ERROR_CODES.INTERNAL_ERROR, 'server error')); 
-}   
+    return res
+      .status(err.statusCode)
+      .json(error(err.code, err.message, err.details));
+  }
 
-// I used err.status for invalid json(comes by default) and bad request(from the badRequestError class) because they are available.
-// with server error, ther is no err.status to use, so I had to hard code it.
+  console.error(err); // logs unknown errors that bypass the 2 conditionals above
 
+  return res
+    .status(500)
+    .json(error(ERROR_CODES.INTERNAL_ERROR, 'server error'));
+}
+
+// I used err.status for invalid json(comes by default) and err.statusCode AppError class because they are available.
+// with server error, there is no err.status to use, so I had to hard code it.

@@ -16,13 +16,6 @@ export const commonListFilters = {
     'number.max': 'Page size must be at most 100.',
   }),
 
-  search: Joi.string().trim().min(1).max(100).messages({
-    'string.base': 'Search must be a string.',
-    'string.empty': 'Search cannot be empty.',
-    'string.min': 'Search cannot be empty.',
-    'string.max': 'Search must be at most 100 characters long.',
-  }),
-
   sortDirection: Joi.string()
     .trim()
     .valid('asc', 'desc')

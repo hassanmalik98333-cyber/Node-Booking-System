@@ -70,7 +70,29 @@ export function expectResourceNotFoundResponse(response) {
     success: false,
     error: {
       code: 'RESOURCE_NOT_FOUND',
-      message: 'Resource not found',
+      message: 'Resource not found.',
+    },
+  });
+}
+
+export function expectForbiddenResponse(response) {
+  expect(response.status).toBe(403);
+  expect(response.body).toEqual({
+    success: false,
+    error: {
+      code: 'FORBIDDEN',
+      message: 'Forbidden.',
+    },
+  });
+}
+
+export function expectAvailabilityWindowNotFoundResponse(response) {
+  expect(response.status).toBe(404);
+  expect(response.body).toEqual({
+    success: false,
+    error: {
+      code: 'AVAILABILITY_WINDOW_NOT_FOUND',
+      message: 'Availability window not found.',
     },
   });
 }

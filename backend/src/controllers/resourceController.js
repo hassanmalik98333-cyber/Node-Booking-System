@@ -1,7 +1,5 @@
 import * as resourceService from '../services/resourceService.js';
-import * as resourceSchemas from '../validators/resourceSchemas.js';
 import { success } from '../utils/response.js';
-import validateRequestInput from '../utils/validateRequestInput.js';
 
 export async function listActiveResources(req, res) {
   const queryParams = req.validated.query;

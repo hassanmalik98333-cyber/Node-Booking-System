@@ -6,9 +6,9 @@ import {
   getActiveResourceByIdParamsSchema,
 } from '../validators/resourceSchemas.js';
 
-const resourceRouter = Router();
+const resourcesRouter = Router();
 
-resourceRouter.get(
+resourcesRouter.get(
   '/',
   validateRequest({
     query: {
@@ -18,7 +18,7 @@ resourceRouter.get(
   }),
   resourceController.listActiveResources,
 );
-resourceRouter.get(
+resourcesRouter.get(
   '/:resourceId',
   validateRequest({
     params: {
@@ -29,4 +29,4 @@ resourceRouter.get(
   resourceController.getActiveResourceById,
 );
 
-export default resourceRouter;
+export default resourcesRouter;

@@ -30,7 +30,7 @@ describe('/api/resources', () => {
   describe('GET /', () => {
     describe('happy path', () => {
       test('returns 200 with correct response and default pagination shape', async () => {
-        const [resource1, resource2] = await Promise.all([
+        const [r1, r2] = await Promise.all([
           createTestResource(),
           createTestResource(),
         ]);
@@ -46,24 +46,24 @@ describe('/api/resources', () => {
           success: true,
           data: expect.arrayContaining([
             {
-              id: resource1.id,
-              ownerId: resource1.owner_id,
-              name: resource1.name,
-              description: resource1.description,
-              capacity: resource1.capacity,
-              isActive: resource1.is_active,
-              createdAt: resource1.created_at.toISOString(),
-              updatedAt: resource1.updated_at.toISOString(),
+              id: r1.id,
+              ownerId: r1.owner_id,
+              name: r1.name,
+              description: r1.description,
+              capacity: r1.capacity,
+              isActive: r1.is_active,
+              createdAt: r1.created_at.toISOString(),
+              updatedAt: r1.updated_at.toISOString(),
             },
             {
-              id: resource2.id,
-              ownerId: resource2.owner_id,
-              name: resource2.name,
-              description: resource2.description,
-              capacity: resource2.capacity,
-              isActive: resource2.is_active,
-              createdAt: resource2.created_at.toISOString(),
-              updatedAt: resource2.updated_at.toISOString(),
+              id: r2.id,
+              ownerId: r2.owner_id,
+              name: r2.name,
+              description: r2.description,
+              capacity: r2.capacity,
+              isActive: r2.is_active,
+              createdAt: r2.created_at.toISOString(),
+              updatedAt: r2.updated_at.toISOString(),
             },
           ]),
           pagination: {
@@ -75,6 +75,7 @@ describe('/api/resources', () => {
         });
         expect(response.body.data).toHaveLength(2);
       });
+
       test('returns the requested page and page size', async () => {
         await Promise.all([
           createTestResource(),

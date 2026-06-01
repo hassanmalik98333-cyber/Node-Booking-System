@@ -2,16 +2,22 @@ import { TEST_PASSWORD } from './testConstants.mjs';
 import { hashPassword } from '../../src/auth/password.js';
 import { createUserForRegistration } from '../../src/data-access/users.js';
 import { createResource } from '../../src/data-access/resources.js';
+import {
+  createAvailabilityWindow,
+  createAllowedDurations,
+  softDeleteAvailabilityWindowById,
+} from '../../src/data-access/availabilityWindows.js';
 import { signAccessToken } from '../../src/auth/authToken.js';
 import {
   generateRandomUsername,
   generateRandomEmail,
   generateRandomResourceName,
 } from './generateRandomData.mjs';
+import * as db from '../../src/db/db.js';
 
 const testPasswordHash = await hashPassword(TEST_PASSWORD);
 
-export async function createTestUser(overrides = {}) {
+export async function createTestUser({ role = 'user', ...overrides } = {}) {
   const testUserData = {
     username: generateRandomUsername(),
     passwordHash: testPasswordHash,
@@ -20,40 +26,34 @@ export async function createTestUser(overrides = {}) {
     ...overrides,
   };
 
-  return await createUserForRegistration(testUserData);
-}
+  const user = await createUserForRegistration(testUserData);
 
-export async function createAuthenticatedTestUser(overrides = {}) {
-  const user = await createTestUser(overrides);
-  const accessToken = await signAccessToken(user);
-
-  return {
-    user,
-    accessToken,
-  };
-}
-
-/*
-export async function createAuthenticatedTestUser({ role = 'user', ...overrides } = {}) {
-  let user = await createTestUser(overrides);
-
-  if (role !== 'user') {
-    const result = await db.query(
-      `
-        UPDATE users
-        SET role = $1
-        WHERE id = $2
-        RETURNING role
-      `,
-      [role, user.id],
-    );
-
-    user = {
-      ...user,
-      role: result.rows[0].role,
-    };
+  if (role === 'user') {
+    return user;
   }
 
+  // So that I can make users that have an employee or admin role for testing.
+  const result = await db.query(
+    `
+      UPDATE users
+      SET role = $1
+      WHERE id = $2
+      RETURNING role
+    `,
+    [role, user.id],
+  );
+
+  return {
+    ...user,
+    role: result.rows[0].role,
+  };
+}
+
+export async function createAuthenticatedTestUser({
+  role = 'user',
+  ...overrides
+} = {}) {
+  const user = await createTestUser({ role, ...overrides });
   const accessToken = await signAccessToken(user);
 
   return {
@@ -61,14 +61,15 @@ export async function createAuthenticatedTestUser({ role = 'user', ...overrides 
     accessToken,
   };
 }
-*/
 
-// Override ownerId only when the test needs a specific user to own the resource.
-export async function createTestResource(overrides = {}) {
-  const { id } = await createTestUser();
+export async function createTestResource({
+  owner = undefined,
+  ...overrides
+} = {}) {
+  const resourceOwner = owner ?? (await createTestUser());
 
   const testResourceData = {
-    ownerId: id,
+    ownerId: resourceOwner.id,
     name: generateRandomResourceName(),
     description: 'Test resource description',
     capacity: 10,
@@ -76,5 +77,53 @@ export async function createTestResource(overrides = {}) {
     ...overrides,
   };
 
-  return await createResource(testResourceData);
+  const resource = await createResource(testResourceData);
+
+  return {
+    ...resource,
+    owner: resourceOwner,
+  };
+}
+
+export async function createTestAvailabilityWindow({
+  allowedDurations = [30, 60],
+  deleted = false,
+  expired = false,
+  noDurations = false,
+  resourceOwner = undefined,
+  ...overrides
+} = {}) {
+  const resource = await createTestResource({ owner: resourceOwner });
+
+  const testWindowData = {
+    resourceId: resource.id,
+    startTime: expired ? '2025-01-01T09:00:00Z' : '2036-01-01T09:00:00Z',
+    endTime: expired ? '2025-01-01T17:00:00Z' : '2036-01-01T17:00:00Z',
+    cancellationNoticeMinutes: 120,
+    ...overrides,
+  };
+
+  const window = await createAvailabilityWindow(testWindowData);
+
+  let allowed_durations;
+
+  if (noDurations === false) {
+    allowed_durations = await createAllowedDurations({
+      windowId: window.id,
+      minutesList: allowedDurations,
+    });
+  }
+
+  let deletedWindow;
+
+  if (deleted) {
+    deletedWindow = await softDeleteAvailabilityWindowById(window.id);
+  }
+
+  return {
+    ...window,
+    allowed_durations: noDurations ? [] : allowed_durations,
+    deleted_at: deleted ? deletedWindow.deleted_at : window.deleted_at,
+    resource,
+  };
 }

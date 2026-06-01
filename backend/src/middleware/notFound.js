@@ -1,7 +1,7 @@
 import AppError from '../errors/AppError.js';
 
 function notFound(req, res) {
-  throw AppError.notFound('Not Found');
+  throw AppError.notFound('Not found');
 }
 
 export default notFound;

@@ -2,6 +2,11 @@ import * as resourceQueries from '../data-access/resources.js';
 import AppError from '../errors/AppError.js';
 import ERROR_CODES from '../errors/errorCodes.js';
 import caughtError from '../errors/caughtError.js';
+import {
+  getLimitAndOffset,
+  derivePagination,
+} from './helpers/paginationHelpers.js';
+import { resourceNotFound } from '../errors/commonErrors.js';
 
 function mapResource(resource) {
   return {
@@ -16,15 +21,13 @@ function mapResource(resource) {
   };
 }
 
-export async function listActiveResources(filters) {
+export async function listActiveResources(queryParams) {
   try {
-    const { page, pageSize, search, sortBy, sortDirection } = filters;
+    const { page, pageSize, search, sortBy, sortDirection } = queryParams;
 
-    const limit = pageSize;
+    const { limit, offset } = getLimitAndOffset({ page, pageSize });
 
-    const offset = (page - 1) * limit;
-
-    const queryFilters = {
+    const filters = {
       limit,
       offset,
       search,
@@ -32,19 +35,14 @@ export async function listActiveResources(filters) {
       sortDirection,
     };
 
-    const [resources, totalResources] = await Promise.all([
-      resourceQueries.listActiveResources(queryFilters),
+    const [resources, total] = await Promise.all([
+      resourceQueries.listActiveResources(filters),
       resourceQueries.countActiveResources(search),
     ]);
 
     return {
       data: resources.map(mapResource),
-      pagination: {
-        page,
-        pageSize,
-        total: totalResources,
-        totalPages: Math.ceil(totalResources / pageSize),
-      },
+      pagination: derivePagination({ page, pageSize, total }),
     };
   } catch (error) {
     throw caughtError(error);
@@ -56,9 +54,7 @@ export async function getActiveResourceById(resourceId) {
     const resource = await resourceQueries.getActiveResourceById(resourceId);
 
     if (!resource) {
-      throw AppError.notFound('Resource not found', {
-        code: ERROR_CODES.RESOURCE_NOT_FOUND,
-      });
+      throw resourceNotFound();
     }
 
     return {

@@ -3,6 +3,12 @@ import { invalidTokenError } from '../errors/commonErrors.js';
 
 async function loadCurrentStateOfAuthUser(req, res, next) {
   try {
+    if (req.auth === undefined) {
+      throw new Error(
+        'loadCurrentStateOfAuthUser must be placed after requireAuth.',
+      );
+    }
+
     const userId = req.auth.userId;
     // Check to see if the token user is still active,
     // and to get the latest role (if it changed) since aquring the token initially.

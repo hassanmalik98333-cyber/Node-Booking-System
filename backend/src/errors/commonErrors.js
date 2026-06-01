@@ -6,3 +6,9 @@ export function invalidTokenError() {
     code: ERROR_CODES.INVALID_TOKEN,
   });
 }
+
+export function resourceNotFound() {
+  return AppError.notFound('Resource not found.', {
+    code: ERROR_CODES.RESOURCE_NOT_FOUND,
+  });
+}
